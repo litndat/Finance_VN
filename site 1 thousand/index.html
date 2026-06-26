@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Finance JSC</title>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.23.2/babel.min.js"></script>
+<script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+<script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+/* ── Reset ── */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#070c17;--bg2:#0e1625;--bg3:#172033;--bg4:#1f2d44;--bg5:#283a58;
+  --border:#1c2b40;--border2:#263d5a;
+  --text:#e9eef8;--muted:#6272a4;--muted2:#8a9cc0;
+  --blue:#4f8ef7;--blue-g:rgba(79,142,247,.18);--blue-dim:rgba(79,142,247,.08);
+  --green:#20c997;--green-g:rgba(32,201,151,.15);
+  --amber:#ffa94d;--amber-g:rgba(255,169,77,.15);
+  --red:#f06595;--red-g:rgba(240,101,149,.15);
+  --purple:#a78bfa;--purple-g:rgba(167,139,250,.15);
+  --shadow:0 12px 40px rgba(0,0,0,.55);--shadow-sm:0 3px 14px rgba(0,0,0,.4);
+  --r:13px;--r-sm:9px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;font-size:14px;min-height:100vh;display:flex;flex-direction:column}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+/* ── Mobile top bar ── */
+#topbar{
+  display:none;position:fixed;top:0;left:0;right:0;z-index:25;
+  height:56px;align-items:center;padding:0 14px;gap:12px;
+  background:rgba(7,12,23,.88);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+}
+#topbar .logo-m{font-size:15px;font-weight:800;flex:1;background:linear-gradient(90deg,#4f8ef7,#20c997);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+#ham-btn{background:none;border:none;color:var(--muted2);cursor:pointer;padding:7px;border-radius:8px;font-size:20px;line-height:1;transition:.15s}
+#ham-btn:hover{background:var(--bg3);color:var(--text)}
+
+/* ── Sidebar overlay ── */
+.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:29;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.sb-overlay.show{display:block}
+
+/* ── Sidebar ── */
+#sidebar{
+  width:240px;min-height:100vh;
+  background:linear-gradient(180deg,#0b1626 0%,#070e1a 100%);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;bottom:0;z-index:30;
+  transition:transform .28s cubic-bezier(.4,0,.2,1);
+}
+#sidebar .logo{
+  padding:20px 16px 16px;font-size:17px;font-weight:800;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+}
+.logo-icon{
+  width:34px;height:34px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,#4f8ef7,#20c997);
+  display:flex;align-items:center;justify-content:center;font-size:17px;
+}
+#sidebar .logo .brand{background:linear-gradient(90deg,#4f8ef7,#20c997);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+#sidebar nav{flex:1;padding:10px 10px;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
+#sidebar nav a{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;
+  color:var(--muted);cursor:pointer;border-radius:10px;
+  transition:all .15s;font-size:13.5px;font-weight:500;
+  position:relative;
+}
+#sidebar nav a .ni{font-size:16px;width:22px;text-align:center;flex-shrink:0}
+#sidebar nav a:hover{color:var(--muted2);background:var(--bg3)}
+#sidebar nav a.active{
+  color:var(--text);
+  background:linear-gradient(90deg,rgba(79,142,247,.14),rgba(79,142,247,.04));
+}
+#sidebar nav a.active::before{
+  content:'';position:absolute;left:0;top:20%;bottom:20%;
+  width:3px;border-radius:0 3px 3px 0;
+  background:linear-gradient(180deg,#4f8ef7,#20c997);
+}
+.nav-sep{height:1px;background:var(--border);margin:8px 4px}
+#sidebar .user-box{
+  margin:0 10px 14px;padding:13px;
+  background:var(--bg3);border:1px solid var(--border2);border-radius:11px;
+}
+.u-name{font-size:13px;font-weight:700;margin-bottom:2px;display:flex;align-items:center;gap:6px}
+.u-role{font-size:10px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+
+/* ── Layout ── */
+#layout{margin-left:240px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+#main{padding:26px 30px;flex:1;max-width:1180px;width:100%}
+
+/* ── Section header ── */
+.section-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px}
+.section-header h2{font-size:21px;font-weight:800;letter-spacing:-.4px}
+.section-header .btns{display:flex;gap:8px;flex-wrap:wrap}
+
+/* ── Cards ── */
+.card{
+  background:linear-gradient(135deg,rgba(23,32,51,.85),rgba(14,22,37,.9));
+  border:1px solid var(--border);border-radius:var(--r);
+  padding:18px;overflow-x:auto;
+}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:14px;margin-bottom:22px}
+
+/* ── Stat cards ── */
+.stat-card{
+  background:linear-gradient(145deg,var(--bg3),var(--bg2));
+  border:1px solid var(--border2);border-radius:var(--r);
+  padding:16px 18px;position:relative;overflow:hidden;
+  transition:transform .2s,box-shadow .2s;cursor:default;
+}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,0,0,.4)}
+.stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--sc,linear-gradient(90deg,#4f8ef7,#6c63ff));border-radius:2px 2px 0 0}
+.stat-card.c-green::after{background:linear-gradient(90deg,#20c997,#4f8ef7)}
+.stat-card.c-red::after{background:linear-gradient(90deg,#f06595,#f5365c)}
+.stat-card.c-amber::after{background:linear-gradient(90deg,#ffa94d,#f5a623)}
+.stat-card.c-purple::after{background:linear-gradient(90deg,#a78bfa,#6c63ff)}
+.stat-card .label{font-size:10.5px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+.stat-card .value{font-size:20px;font-weight:800;letter-spacing:-.5px;line-height:1.2}
+.stat-card .sub{font-size:11px;color:var(--muted);margin-top:5px}
+.stat-card .sc-icon{position:absolute;right:14px;top:14px;font-size:24px;opacity:.15}
+
+/* ── Forms ── */
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:10.5px;color:var(--muted);margin-bottom:6px;font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+input[type=text],input[type=number],input[type=date],input[type=month],input[type=password],select,textarea{
+  width:100%;padding:10px 13px;
+  background:var(--bg4);border:1px solid var(--border2);
+  border-radius:var(--r-sm);color:var(--text);font-size:13px;outline:none;
+  transition:border-color .15s,box-shadow .15s;-webkit-appearance:none;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-g)}
+input::placeholder{color:var(--muted)}
+select option{background:var(--bg3)}
+
+/* ── Buttons ── */
+.btn{
+  padding:9px 18px;border-radius:var(--r-sm);border:none;cursor:pointer;
+  font-size:13px;font-weight:600;transition:all .15s;
+  display:inline-flex;align-items:center;gap:6px;letter-spacing:.1px;
+  white-space:nowrap;
+}
+.btn-primary{background:linear-gradient(135deg,#4f8ef7,#6c63ff);color:#fff;box-shadow:0 4px 16px rgba(79,142,247,.35)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(79,142,247,.45)}
+.btn-primary:active{transform:translateY(0)}
+.btn-danger{background:var(--bg4);color:var(--red);border:1px solid var(--border2)}
+.btn-danger:hover{background:var(--red-g);border-color:var(--red)}
+.btn-ghost{background:var(--bg4);color:var(--muted2);border:1px solid var(--border2)}
+.btn-ghost:hover{background:var(--bg5);color:var(--text)}
+.btn-sm{padding:6px 12px;font-size:11.5px;border-radius:7px}
+
+/* ── Tables ── */
+table{width:100%;border-collapse:collapse;min-width:460px}
+thead tr{background:rgba(23,32,51,.6)}
+th{text-align:left;padding:10px 14px;font-size:10.5px;color:var(--muted);border-bottom:1px solid var(--border);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+td{padding:11px 14px;font-size:13px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(79,142,247,.04)}
+
+/* ── Modal ── */
+.overlay{position:fixed;inset:0;background:rgba(3,7,15,.78);z-index:100;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);padding:16px}
+.modal{
+  background:linear-gradient(145deg,#12213d,#0c1828);
+  border:1px solid var(--border2);border-radius:16px;
+  padding:26px;width:100%;max-width:490px;max-height:92vh;overflow-y:auto;
+  box-shadow:var(--shadow);
+}
+.modal h3{font-size:17px;font-weight:800;margin-bottom:20px;letter-spacing:-.3px}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
+
+/* ── Misc ── */
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.progress-bar{background:var(--bg4);border-radius:20px;height:6px;overflow:hidden}
+.progress-bar-fill{height:100%;border-radius:20px;transition:width .4s ease}
+.tabs{display:flex;gap:2px;margin-bottom:18px;background:var(--bg3);padding:4px;border-radius:11px;width:fit-content;max-width:100%}
+.tab{padding:7px 16px;cursor:pointer;color:var(--muted);font-size:13px;font-weight:600;border-radius:8px;transition:all .15s;white-space:nowrap}
+.tab.active{background:var(--bg5);color:var(--text);box-shadow:0 2px 10px rgba(0,0,0,.35)}
+input[type=range]{accent-color:var(--blue);height:4px;cursor:pointer}
+.health-item{margin-bottom:14px}
+.health-item .hi-header{display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;background:var(--bg4);border:1px solid var(--border2);color:var(--muted2)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+
+/* ── Login ── */
+.login-wrap{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;
+  background:
+    radial-gradient(ellipse 60% 50% at 15% 60%,rgba(79,142,247,.09) 0%,transparent 70%),
+    radial-gradient(ellipse 50% 40% at 85% 25%,rgba(167,139,250,.08) 0%,transparent 70%),
+    radial-gradient(ellipse 40% 60% at 60% 80%,rgba(32,201,151,.07) 0%,transparent 70%),
+    var(--bg);
+}
+.login-box{
+  background:linear-gradient(145deg,rgba(18,33,61,.92),rgba(11,20,38,.95));
+  border:1px solid var(--border2);border-radius:22px;
+  padding:42px 38px;width:100%;max-width:400px;
+  box-shadow:0 30px 90px rgba(0,0,0,.65);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+}
+.login-box h1{font-size:25px;font-weight:900;margin-bottom:4px;letter-spacing:-.6px}
+.login-box .sub{font-size:13px;color:var(--muted);margin-bottom:32px}
+.login-logo{
+  width:56px;height:56px;border-radius:16px;
+  background:linear-gradient(135deg,#4f8ef7,#20c997);
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;margin:0 auto 18px;
+}
+
+/* ── Responsive ── */
+@media(max-width:768px){
+  #topbar{display:flex}
+  #sidebar{transform:translateX(-100%);box-shadow:none}
+  #sidebar.open{transform:translateX(0);box-shadow:24px 0 60px rgba(0,0,0,.7)}
+  #layout{margin-left:0;padding-top:56px}
+  #main{padding:14px 14px 80px}
+  .card-grid{grid-template-columns:1fr 1fr;gap:10px}
+  .grid2{grid-template-columns:1fr}
+  .stat-card .value{font-size:17px}
+  .section-header{flex-wrap:wrap;gap:10px}
+  .section-header h2{font-size:18px}
+  .modal{padding:20px 18px}
+  .login-box{padding:32px 24px}
+  .tabs{overflow-x:auto;width:100%;max-width:100%}
+}
+@media(max-width:400px){
+  .card-grid{grid-template-columns:1fr}
+  #main{padding:12px 12px 80px}
+}
+</style>
+</head>
+<body>
+<div id="root"><div style="color:#e2e8f0;padding:60px;text-align:center;font-family:sans-serif"><div style="font-size:32px;margin-bottom:12px">💰</div><div style="font-size:16px;color:#8891a4">Đang tải... (5-10 giây)</div></div></div>
+<script type="text/babel">
+// ─── CONFIG ───────────────────────────────────────────────────────────────
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz8d12EvZ_wbLPZn8MhVn1hKjNT4BWaHNQPE7zn3bwk7h4VVBvsoUB8u-Dflh0JPriCDA/exec'
+// ─────────────────────────────────────────────────────────────────────────
+
+const { useState, useEffect, useReducer, useContext, createContext, useCallback, useRef } = React
+const _RC = window.Recharts || {}
+const { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } = _RC
+const hasCharts = !!BarChart
+
+// ── Utils ──────────────────────────────────────────────────────────────────
+const uuid = () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:(r&0x3|0x8)).toString(16)})
+const fmt = (n) => {
+  if (!n && n !== 0) return '0'
+  const abs = Math.abs(n)
+  if (abs >= 1000000) return (n/1000000).toFixed(2).replace(/\.?0+$/,'') + ' tỷ'
+  if (abs >= 1000)    return (n/1000).toFixed(1).replace(/\.?0+$/,'') + ' triệu'
+  if (abs >= 1)       return Math.round(n).toLocaleString('vi-VN') + ' nghìn'
+  return '0'
+}
+const fmtShort = (n) => { if (!n && n!==0) return '0'; if (Math.abs(n)>=1000000) return (n/1000000).toFixed(1)+'T'; if (Math.abs(n)>=1000) return (n/1000).toFixed(0)+'M'; return Math.round(n)+'K' }
+const monthlyPayment = (p,r,m) => { if(!p||p<=0)return 0; const mr=r/100/12; if(mr===0)return p/m; return p*mr*Math.pow(1+mr,m)/(Math.pow(1+mr,m)-1) }
+const calcSavings = (init,monthly,rate,years) => { const r=rate/100/12; let b=init; for(let m=0;m<years*12;m++) b=b*(1+r)+monthly; return b }
+const monthsToGoal = (cur,tar,sur) => { if(!sur||sur<=0)return null; const rem=tar-cur; if(rem<=0)return 0; return Math.ceil(rem/sur) }
+const formatMonths = (m) => { if(m===null)return 'Không xác định'; if(m===0)return 'Đã đạt! 🎉'; const y=Math.floor(m/12),mo=m%12; if(y===0)return `${mo} tháng`; if(mo===0)return `${y} năm`; return `${y} năm ${mo} tháng` }
+
+const ASSET_CATS = [
+  {key:'cash',label:'Tiền mặt',icon:'💵',color:'#378ADD'},{key:'savings',label:'Tiết kiệm NH',icon:'🏦',color:'#1D9E75'},
+  {key:'stocks',label:'Chứng khoán',icon:'📈',color:'#EF9F27'},{key:'crypto',label:'Crypto',icon:'🪙',color:'#7F77DD'},
+  {key:'realestate',label:'Bất động sản',icon:'🏠',color:'#D85A30'},{key:'other',label:'Khác',icon:'📦',color:'#888780'},
+]
+const INCOME_CATS = [{value:'salary',label:'Lương'},{value:'freelance',label:'Freelance'},{value:'rental',label:'Cho thuê'},{value:'business',label:'Kinh doanh'},{value:'dividend',label:'Cổ tức / Lãi'},{value:'other',label:'Khác...'}]
+const EXPENSE_CATS = [{value:'food',label:'Ăn uống'},{value:'housing',label:'Nhà ở / Thuê'},{value:'transport',label:'Đi lại'},{value:'entertainment',label:'Giải trí'},{value:'health',label:'Sức khỏe'},{value:'education',label:'Học tập'},{value:'investment',label:'Đầu tư / Tiết kiệm'},{value:'other',label:'Khác...'}]
+const INV_TYPES = [{value:'realestate',label:'Bất động sản'},{value:'stocks',label:'Cổ phiếu'},{value:'savings',label:'Tiết kiệm'},{value:'crypto',label:'Crypto'},{value:'bond',label:'Trái phiếu'},{value:'other',label:'Khác...'}]
+const BIZ_STATUS = [{value:'planning',label:'Đang lên kế hoạch'},{value:'active',label:'Đang hoạt động'},{value:'paused',label:'Tạm dừng'},{value:'completed',label:'Hoàn thành'}]
+
+// ── API ───────────────────────────────────────────────────────────────────
+const hasUrl = () => APPS_SCRIPT_URL && !APPS_SCRIPT_URL.includes('YOUR_')
+const api = {
+  fetchAll: async (userId) => {
+    if (!hasUrl()) return null
+    const res = await fetch(`${APPS_SCRIPT_URL}?sheet=all&userId=${userId}`)
+    const json = await res.json()
+    return json.success ? json.data : null
+  },
+  login: async (username, password) => {
+    // Admin local luôn hoạt động, không cần Sheets
+    // User khác → phải có Sheets URL
+    if (!hasUrl()) return {success:false, error:'Sai tên đăng nhập hoặc mật khẩu'}
+    try {
+      const res = await fetch(APPS_SCRIPT_URL, {method:'POST', body:JSON.stringify({action:'login',data:{username,password}})})
+      const json = await res.json()
+      // Nếu Apps Script chưa có login action → json.data sẽ là undefined
+      if (json.success && json.data && json.data.user) return {success:true, user:json.data.user}
+      if (json.success && !json.data) return {success:false, error:'Apps Script chưa được cập nhật code mới. Xem hướng dẫn ở tab Cài đặt.'}
+      return json
+    } catch(e) {
+      return {success:false, error:'Lỗi kết nối Sheets: '+e.message}
+    }
+  },
+  createUser: async (userData) => {
+    if (!hasUrl()) return {success:false,error:'Chưa cấu hình Apps Script URL'}
+    const res = await fetch(APPS_SCRIPT_URL, {method:'POST', body:JSON.stringify({action:'createUser',data:userData})})
+    return res.json()
+  },
+  getUsers: async () => {
+    if (!hasUrl()) return {success:true, data:[{id:'demo-admin',username:'admin',role:'admin',createdAt:''}]}
+    const res = await fetch(`${APPS_SCRIPT_URL}?sheet=Users`)
+    const json = await res.json()
+    return json.success ? {success:true,data:json.data.Users||[]} : {success:false,data:[]}
+  },
+  deleteUser: async (id) => {
+    if (!hasUrl()) return {success:false}
+    const res = await fetch(APPS_SCRIPT_URL, {method:'POST', body:JSON.stringify({action:'delete',sheet:'Users',data:{id}})})
+    return res.json()
+  },
+  upsert: async (sheet, data) => {
+    if (!hasUrl()) return
+    return fetch(APPS_SCRIPT_URL, {method:'POST', body:JSON.stringify({action:'upsert',sheet,data})}).then(r=>r.json())
+  },
+  remove: async (sheet, id) => {
+    if (!hasUrl()) return
+    return fetch(APPS_SCRIPT_URL, {method:'POST', body:JSON.stringify({action:'delete',sheet,data:{id}})}).then(r=>r.json())
+  },
+}
+
+// ── State ─────────────────────────────────────────────────────────────────
+const LS_KEY = 'vntaichinh_v3'
+const USER_KEY = 'vntaichinh_user'
+const loadLS = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)) || {} } catch { return {} } }
+const saveLS = (s) => { try { localStorage.setItem(LS_KEY, JSON.stringify(s)) } catch {} }
+const loadUser = () => { try { return JSON.parse(localStorage.getItem(USER_KEY)) } catch { return null } }
+const saveUser = (u) => { try { localStorage.setItem(USER_KEY, JSON.stringify(u)) } catch {} }
+const clearUser = () => { try { localStorage.removeItem(USER_KEY); localStorage.removeItem(LS_KEY) } catch {} }
+
+const INIT = {
+  assets:[], debts:[], income:[], expenses:[],
+  investments:[], goals:[], businessPlans:[],
+  activeTab:'dashboard', syncStatus:'idle',
+  currentMonth: new Date().getMonth()+1,
+  currentYear: new Date().getFullYear(),
+  currentUser: null,
+}
+
+function reducer(state, action) {
+  switch(action.type) {
+    case 'SET_USER':    return {...state, currentUser: action.user}
+    case 'LOGOUT':      return {...INIT}
+    case 'SET_TAB':     return {...state, activeTab: action.tab}
+    case 'SET_MONTH_YEAR': return {...state, currentMonth: action.month, currentYear: action.year}
+    case 'SET_SYNC':    return {...state, syncStatus: action.status}
+    case 'LOAD':        return {...state, ...action.data, syncStatus:'idle'}
+    case 'ADD_ASSET':   { const assets=[...state.assets,action.row]; saveLS({...state,assets}); return {...state,assets} }
+    case 'UPD_ASSET':   { const assets=state.assets.map(a=>a.id===action.id?{...a,...action.changes,updatedAt:new Date().toISOString()}:a); saveLS({...state,assets}); return {...state,assets} }
+    case 'DEL_ASSET':   { const assets=state.assets.filter(a=>a.id!==action.id); saveLS({...state,assets}); return {...state,assets} }
+    case 'ADD_DEBT':    { const debts=[...state.debts,action.row]; saveLS({...state,debts}); return {...state,debts} }
+    case 'UPD_DEBT':    { const debts=state.debts.map(d=>d.id===action.id?{...d,...action.changes,updatedAt:new Date().toISOString()}:d); saveLS({...state,debts}); return {...state,debts} }
+    case 'DEL_DEBT':    { const debts=state.debts.filter(d=>d.id!==action.id); saveLS({...state,debts}); return {...state,debts} }
+    case 'ADD_INCOME':  { const income=[...state.income,action.row]; saveLS({...state,income}); return {...state,income} }
+    case 'UPD_INCOME':  { const income=state.income.map(i=>i.id===action.id?{...i,...action.changes,updatedAt:new Date().toISOString()}:i); saveLS({...state,income}); return {...state,income} }
+    case 'DEL_INCOME':  { const income=state.income.filter(i=>i.id!==action.id); saveLS({...state,income}); return {...state,income} }
+    case 'ADD_EXPENSE': { const expenses=[...state.expenses,action.row]; saveLS({...state,expenses}); return {...state,expenses} }
+    case 'UPD_EXPENSE': { const expenses=state.expenses.map(e=>e.id===action.id?{...e,...action.changes,updatedAt:new Date().toISOString()}:e); saveLS({...state,expenses}); return {...state,expenses} }
+    case 'DEL_EXPENSE': { const expenses=state.expenses.filter(e=>e.id!==action.id); saveLS({...state,expenses}); return {...state,expenses} }
+    case 'ADD_INVESTMENT':  { const investments=[...state.investments,action.row]; saveLS({...state,investments}); return {...state,investments} }
+    case 'UPD_INVESTMENT':  { const investments=state.investments.map(i=>i.id===action.id?{...i,...action.changes,updatedAt:new Date().toISOString()}:i); saveLS({...state,investments}); return {...state,investments} }
+    case 'DEL_INVESTMENT':  { const investments=state.investments.filter(i=>i.id!==action.id); saveLS({...state,investments}); return {...state,investments} }
+    case 'ADD_GOAL':    { const goals=[...state.goals,action.row]; saveLS({...state,goals}); return {...state,goals} }
+    case 'UPD_GOAL':    { const goals=state.goals.map(g=>g.id===action.id?{...g,...action.changes,updatedAt:new Date().toISOString()}:g); saveLS({...state,goals}); return {...state,goals} }
+    case 'DEL_GOAL':    { const goals=state.goals.filter(g=>g.id!==action.id); saveLS({...state,goals}); return {...state,goals} }
+    case 'ADD_BIZ':     { const businessPlans=[...state.businessPlans,action.row]; saveLS({...state,businessPlans}); return {...state,businessPlans} }
+    case 'UPD_BIZ':     { const businessPlans=state.businessPlans.map(p=>p.id===action.id?{...p,...action.changes,updatedAt:new Date().toISOString()}:p); saveLS({...state,businessPlans}); return {...state,businessPlans} }
+    case 'DEL_BIZ':     { const businessPlans=state.businessPlans.filter(p=>p.id!==action.id); saveLS({...state,businessPlans}); return {...state,businessPlans} }
+    default: return state
+  }
+}
+
+const Ctx = createContext(null)
+
+// ── Shared Components ─────────────────────────────────────────────────────
+function SliderWithInput({label,value,min,max,step=500,onChange,suffix='ngàn đ'}) {
+  const [iv,setIv] = useState(String(value))
+  useEffect(()=>setIv(String(value)),[value])
+  const handleInput = e => { setIv(e.target.value); const n=parseFloat(e.target.value.replace(/,/g,'.')); if(!isNaN(n))onChange(n) }
+  return (
+    <div style={{marginBottom:14}}>
+      <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'var(--muted)',marginBottom:4}}>
+        <span>{label}</span><span style={{color:'var(--text)',fontWeight:500}}>{fmt(value)}</span>
+      </div>
+      <div style={{display:'flex',gap:8,alignItems:'center'}}>
+        <input type="range" min={min} max={max} step={step} value={Math.min(max,Math.max(min,value))}
+          onChange={e=>{onChange(Number(e.target.value));setIv(e.target.value)}} style={{flex:1}}/>
+        <input type="text" value={iv} onChange={handleInput}
+          style={{width:80,textAlign:'right',padding:'5px 7px',border:'1px solid var(--border)',borderRadius:6,background:'var(--bg)',color:'var(--text)',fontSize:12}}/>
+        <span style={{fontSize:11,color:'var(--muted)',flexShrink:0}}>{suffix}</span>
+      </div>
+    </div>
+  )
+}
+
+function SelectWithOther({value,onChange,options,placeholder='Chọn...'}) {
+  const isOther = value && !options.find(o=>o.value===value)
+  const [showInput,setShowInput] = useState(isOther)
+  const [customVal,setCustomVal] = useState(isOther?value:'')
+  const selectValue = showInput?'other':(value||'')
+  const handleSelect = e => { const v=e.target.value; if(v==='other'){setShowInput(true);onChange(customVal||'')}else{setShowInput(false);onChange(v)} }
+  return (
+    <div>
+      <select value={selectValue} onChange={handleSelect}>
+        <option value="">{placeholder}</option>
+        {options.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}
+        {!options.find(o=>o.value==='other')&&<option value="other">Khác...</option>}
+      </select>
+      {showInput&&<input type="text" value={customVal} autoFocus placeholder="Nhập tên cụ thể..."
+        onChange={e=>{setCustomVal(e.target.value);onChange(e.target.value)}} style={{marginTop:6,border:'1px solid var(--blue)'}}/>}
+    </div>
+  )
+}
+
+function Modal({title,onClose,children}) {
+  return (
+    <div className="overlay" onClick={e=>{if(e.target===e.currentTarget)onClose()}}>
+      <div className="modal">
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:18}}>
+          <h3 style={{margin:0}}>{title}</h3>
+          <button onClick={onClose} style={{background:'none',border:'none',color:'var(--muted)',cursor:'pointer',fontSize:18}}>×</button>
+        </div>
+        {children}
+      </div>
+    </div>
+  )
+}
+
+// ── LOGIN SCREEN ──────────────────────────────────────────────────────────
+function LoginScreen({onLogin}) {
+  const [username,setUsername] = useState('')
+  const [password,setPassword] = useState('')
+  const [loading,setLoading] = useState(false)
+  const [error,setError] = useState('')
+
+  const submit = async (e) => {
+    e.preventDefault()
+    if(!username||!password) return
+    setLoading(true); setError('')
+    const res = await api.login(username.trim(), password)
+    setLoading(false)
+    if (res.success) onLogin(res.user)
+    else setError(res.error||'Đăng nhập thất bại')
+  }
+
+  return (
+    <div className="login-wrap">
+      <div className="login-box">
+        <div className="login-logo">💰</div>
+        <h1 style={{textAlign:'center'}}>VN Finance</h1>
+        <p className="sub" style={{textAlign:'center'}}>Quản lý dòng tiền cá nhân của bạn</p>
+        <form onSubmit={submit}>
+          <div className="form-group">
+            <label>Tên đăng nhập</label>
+            <input type="text" value={username} onChange={e=>setUsername(e.target.value)} placeholder="username" autoFocus/>
+          </div>
+          <div className="form-group">
+            <label>Mật khẩu</label>
+            <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••"/>
+          </div>
+          {error && <div style={{color:'var(--red)',fontSize:13,marginBottom:12,padding:'8px 10px',background:'rgba(216,90,48,.1)',borderRadius:6}}>{error}</div>}
+          <button className="btn btn-primary" type="submit" disabled={loading} style={{width:'100%',padding:'12px',fontSize:14,justifyContent:'center'}}>
+            {loading ? '⏳ Đang đăng nhập...' : '🔓 Đăng nhập'}
+          </button>
+        </form>
+        <div style={{marginTop:14,fontSize:11,color:'var(--muted)',textAlign:'center',padding:'8px',background:'var(--bg3)',borderRadius:6}}>
+          Tài khoản admin: <strong style={{color:'var(--text)'}}>liên hệ tiendat</strong>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── USER MANAGEMENT (admin only) ──────────────────────────────────────────
+function UserManagement() {
+  const [users,setUsers] = useState([])
+  const [loading,setLoading] = useState(true)
+  const [modal,setModal] = useState(false)
+  const [form,setForm] = useState({username:'',password:'',role:'user'})
+  const [saving,setSaving] = useState(false)
+  const [msg,setMsg] = useState('')
+
+  useEffect(()=>{ loadUsers() },[])
+
+  const loadUsers = async () => {
+    setLoading(true)
+    const res = await api.getUsers()
+    setUsers(res.data||[])
+    setLoading(false)
+  }
+
+  const createUser = async () => {
+    if(!form.username||!form.password){setMsg('Vui lòng điền đầy đủ');return}
+    setSaving(true); setMsg('')
+    const newUser = {id:uuid(), username:form.username.trim(), password:form.password, role:form.role, createdAt:new Date().toISOString()}
+    const res = await api.createUser(newUser)
+    setSaving(false)
+    if(res.success||!hasUrl()){
+      setUsers(p=>[...p,newUser])
+      setModal(false)
+      setForm({username:'',password:'',role:'user'})
+    } else {
+      setMsg(res.error||'Tạo thất bại')
+    }
+  }
+
+  const deleteUser = async (u) => {
+    if(!confirm(`Xóa user "${u.username}"? Dữ liệu của họ vẫn còn trong Sheets.`)) return
+    await api.deleteUser(u.id)
+    setUsers(p=>p.filter(x=>x.id!==u.id))
+  }
+
+  return (
+    <div>
+      <div className="section-header">
+        <h2>Quản lý người dùng</h2>
+        <button className="btn btn-primary btn-sm" onClick={()=>setModal(true)}>+ Tạo user</button>
+      </div>
+      <div className="card" style={{marginBottom:14,background:'var(--bg3)',border:'1px solid var(--amber)30'}}>
+        <div style={{fontSize:13,color:'var(--muted)'}}>
+          🔐 Mỗi user chỉ thấy dữ liệu của chính họ. Admin thấy tất cả. Mật khẩu lưu dạng text trong Sheets — chỉ dùng cho mục đích cá nhân/gia đình.
+        </div>
+      </div>
+      <div className="card">
+        {loading ? (
+          <div style={{padding:24,textAlign:'center',color:'var(--muted)'}}>Đang tải...</div>
+        ) : (
+          <table>
+            <thead><tr><th>Tên đăng nhập</th><th>Vai trò</th><th>Ngày tạo</th><th></th></tr></thead>
+            <tbody>
+              {users.map(u=>(
+                <tr key={u.id}>
+                  <td style={{fontWeight:500}}>{u.username}</td>
+                  <td>
+                    <span className="badge" style={{background:u.role==='admin'?'rgba(55,138,221,.15)':'rgba(29,158,117,.15)',color:u.role==='admin'?'var(--blue)':'var(--green)'}}>
+                      {u.role==='admin'?'Admin':'User'}
+                    </span>
+                  </td>
+                  <td style={{color:'var(--muted)',fontSize:12}}>{u.createdAt ? new Date(u.createdAt).toLocaleDateString('vi-VN') : '—'}</td>
+                  <td style={{textAlign:'right'}}>
+                    {u.role!=='admin' && (
+                      <button className="btn btn-danger btn-sm" onClick={()=>deleteUser(u)}>Xóa</button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+      {modal && (
+        <Modal title="Tạo người dùng mới" onClose={()=>setModal(false)}>
+          <div className="form-group"><label>Tên đăng nhập</label>
+            <input type="text" value={form.username} onChange={e=>setForm(p=>({...p,username:e.target.value}))} placeholder="vd: nguyen_van_a"/>
+          </div>
+          <div className="form-group"><label>Mật khẩu</label>
+            <input type="password" value={form.password} onChange={e=>setForm(p=>({...p,password:e.target.value}))} placeholder="Mật khẩu"/>
+          </div>
+          <div className="form-group"><label>Vai trò</label>
+            <select value={form.role} onChange={e=>setForm(p=>({...p,role:e.target.value}))}>
+              <option value="user">User — chỉ xem dữ liệu của bản thân</option>
+              <option value="admin">Admin — quản lý tất cả</option>
+            </select>
+          </div>
+          {msg && <div style={{color:'var(--red)',fontSize:13,marginBottom:10}}>{msg}</div>}
+          <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+            <button className="btn btn-ghost" onClick={()=>setModal(false)}>Hủy</button>
+            <button className="btn btn-primary" onClick={createUser} disabled={saving}>{saving?'Đang tạo...':'Tạo user'}</button>
+          </div>
+        </Modal>
+      )}
+    </div>
+  )
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────
+function Dashboard() {
+  const {state} = useContext(Ctx)
+  const {assets,debts,income,expenses,investments,goals,currentMonth,currentYear} = state
+  const totalAssets = assets.reduce((a,x)=>a+(Number(x.amount)||0),0)
+  const totalDebts  = debts.reduce((a,x)=>a+(Number(x.amount)||0),0)
+  const netWorth    = totalAssets - totalDebts
+  const mIncome  = income.filter(i=>Number(i.month)===currentMonth&&Number(i.year)===currentYear)
+  const mExpense = expenses.filter(e=>Number(e.month)===currentMonth&&Number(e.year)===currentYear)
+  const totalIn  = mIncome.reduce((a,i)=>a+(Number(i.amount)||0),0)
+  const totalOut = mExpense.reduce((a,i)=>a+(Number(i.amount)||0),0)
+  const surplus  = totalIn - totalOut
+  const totalInvested = investments.reduce((a,i)=>a+(Number(i.buyPrice)||0),0)
+  const totalCurrent  = investments.reduce((a,i)=>a+(Number(i.currentPrice)||0),0)
+  const invPnl = totalCurrent - totalInvested
+  const savingsRate = totalIn > 0 ? (surplus/totalIn*100) : 0
+  const liquidRatio = totalOut > 0 ? (assets.filter(a=>a.category==='cash'||a.category==='savings').reduce((a,x)=>a+(Number(x.amount)||0),0)/totalOut) : 0
+  const catMap = {}
+  assets.forEach(a=>{ const k=ASSET_CATS.find(c=>c.key===a.category); const label=k?.label||(a.category||'Khác'); catMap[label]=(catMap[label]||0)+(Number(a.amount)||0) })
+  const pieData = Object.entries(catMap).map(([name,value])=>({name,value}))
+  const PIE_COLORS = ['#378ADD','#1D9E75','#EF9F27','#7F77DD','#D85A30','#888780']
+  const now = new Date()
+  const trendData = Array.from({length:6},(_,i)=>{
+    const d=new Date(now.getFullYear(),now.getMonth()-5+i,1); const m=d.getMonth()+1,y=d.getFullYear()
+    const inc=income.filter(x=>Number(x.month)===m&&Number(x.year)===y).reduce((a,x)=>a+(Number(x.amount)||0),0)
+    const exp=expenses.filter(x=>Number(x.month)===m&&Number(x.year)===y).reduce((a,x)=>a+(Number(x.amount)||0),0)
+    return {label:`T${m}`,thu:inc,chi:exp}
+  })
+  return (
+    <div>
+      <div style={{marginBottom:20}}>
+        <div style={{fontSize:24,fontWeight:700,color:netWorth>=0?'var(--green)':'var(--red)'}}>{fmt(netWorth)}</div>
+        <div style={{fontSize:13,color:'var(--muted)',marginTop:2}}>Tài sản ròng — Tháng {currentMonth}/{currentYear}</div>
+      </div>
+      <div className="card-grid">
+        <div className="stat-card"><div className="label">Tổng tài sản</div><div className="value" style={{color:'var(--blue)',fontSize:18}}>{fmt(totalAssets)}</div></div>
+        <div className="stat-card"><div className="label">Tổng nợ</div><div className="value" style={{color:'var(--red)',fontSize:18}}>{fmt(totalDebts)}</div></div>
+        <div className="stat-card"><div className="label">Thu tháng</div><div className="value" style={{color:'var(--green)',fontSize:18}}>{fmt(totalIn)}</div></div>
+        <div className="stat-card"><div className="label">Chi tháng</div><div className="value" style={{color:'var(--amber)',fontSize:18}}>{fmt(totalOut)}</div></div>
+        <div className="stat-card"><div className="label">Dư tháng</div><div className="value" style={{color:surplus>=0?'var(--green)':'var(--red)',fontSize:18}}>{fmt(surplus)}</div></div>
+        <div className="stat-card"><div className="label">Lời/lỗ đầu tư</div><div className="value" style={{color:invPnl>=0?'var(--green)':'var(--red)',fontSize:18}}>{fmt(invPnl)}</div></div>
+      </div>
+      <div className="grid2" style={{marginBottom:20}}>
+        <div className="card">
+          <div style={{fontWeight:600,marginBottom:14,fontSize:14}}>Xu hướng 6 tháng</div>
+          {hasCharts ? (
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={trendData} barSize={14}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)"/>
+                <XAxis dataKey="label" tick={{fill:'var(--muted)',fontSize:11}} axisLine={false} tickLine={false}/>
+                <YAxis tick={{fill:'var(--muted)',fontSize:10}} axisLine={false} tickLine={false} tickFormatter={fmtShort}/>
+                <Tooltip contentStyle={{background:'var(--bg3)',border:'1px solid var(--border)',borderRadius:8,fontSize:12}} formatter={v=>fmt(v)}/>
+                <Bar dataKey="thu" name="Thu" fill="var(--green)" radius={[3,3,0,0]}/>
+                <Bar dataKey="chi" name="Chi" fill="var(--red)" radius={[3,3,0,0]}/>
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <table style={{fontSize:12}}><thead><tr><th>Tháng</th><th>Thu</th><th>Chi</th></tr></thead>
+              <tbody>{trendData.map(d=><tr key={d.label}><td>{d.label}</td><td style={{color:'var(--green)'}}>{fmt(d.thu)}</td><td style={{color:'var(--red)'}}>{fmt(d.chi)}</td></tr>)}</tbody>
+            </table>
+          )}
+        </div>
+        <div className="card">
+          <div style={{fontWeight:600,marginBottom:14,fontSize:14}}>Cơ cấu tài sản</div>
+          {hasCharts && pieData.length>0 ? (
+            <ResponsiveContainer width="100%" height={180}>
+              <PieChart><Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" nameKey="name">
+                {pieData.map((_,i)=><Cell key={i} fill={PIE_COLORS[i%PIE_COLORS.length]}/>)}
+              </Pie>
+              <Tooltip contentStyle={{background:'var(--bg3)',border:'1px solid var(--border)',borderRadius:8,fontSize:12}} formatter={v=>fmt(v)}/>
+              <Legend wrapperStyle={{fontSize:11,color:'var(--muted)'}}/></PieChart>
+            </ResponsiveContainer>
+          ) : pieData.length>0 ? (
+            <div>{pieData.map((d,i)=><div key={d.name} style={{display:'flex',justifyContent:'space-between',padding:'4px 0',borderBottom:'1px solid var(--border)',fontSize:13}}><span style={{color:PIE_COLORS[i%PIE_COLORS.length]}}>{d.name}</span><span>{fmt(d.value)}</span></div>)}</div>
+          ) : (
+            <div style={{height:180,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--muted)',fontSize:13}}>Chưa có dữ liệu tài sản</div>
+          )}
+        </div>
+      </div>
+      <div className="card">
+        <div style={{fontWeight:600,marginBottom:14,fontSize:14}}>Sức khỏe tài chính</div>
+        <div className="health-item">
+          <div style={{display:'flex',justifyContent:'space-between',fontSize:12,marginBottom:4}}>
+            <span>Tỷ lệ tiết kiệm</span>
+            <span style={{color:savingsRate>=20?'var(--green)':savingsRate>=10?'var(--amber)':'var(--red)'}}>{savingsRate.toFixed(0)}% {savingsRate>=20?'✓ Tốt':savingsRate>=10?'Trung bình':'Thấp'}</span>
+          </div>
+          <div className="progress-bar"><div className="progress-bar-fill" style={{width:`${Math.min(100,savingsRate)}%`,background:savingsRate>=20?'var(--green)':savingsRate>=10?'var(--amber)':'var(--red)'}}/></div>
+          <div style={{fontSize:11,color:'var(--muted)',marginTop:3}}>Mục tiêu: ≥ 20%</div>
+        </div>
+        <div className="health-item">
+          <div style={{display:'flex',justifyContent:'space-between',fontSize:12,marginBottom:4}}>
+            <span>Quỹ khẩn cấp (tháng)</span>
+            <span style={{color:liquidRatio>=6?'var(--green)':liquidRatio>=3?'var(--amber)':'var(--red)'}}>{liquidRatio.toFixed(1)} tháng {liquidRatio>=6?'✓ An toàn':liquidRatio>=3?'Cần thêm':'Nguy hiểm'}</span>
+          </div>
+          <div className="progress-bar"><div className="progress-bar-fill" style={{width:`${Math.min(100,liquidRatio/6*100)}%`,background:liquidRatio>=6?'var(--green)':liquidRatio>=3?'var(--amber)':'var(--red)'}}/></div>
+          <div style={{fontSize:11,color:'var(--muted)',marginTop:3}}>Mục tiêu: ≥ 6 tháng chi tiêu</div>
+        </div>
+      </div>
+      {goals.length>0 && (
+        <div className="card" style={{marginTop:14}}>
+          <div style={{fontWeight:600,marginBottom:12,fontSize:14}}>Mục tiêu đang theo dõi</div>
+          {goals.slice(0,3).map(g=>{
+            const pct=g.targetAmount>0?Math.min(100,(Number(g.currentAmount)||0)/Number(g.targetAmount)*100):0
+            return <div key={g.id} style={{marginBottom:12}}>
+              <div style={{display:'flex',justifyContent:'space-between',fontSize:13,marginBottom:4}}>
+                <span>{g.name}</span><span style={{color:'var(--muted)'}}>{fmt(Number(g.currentAmount)||0)} / {fmt(Number(g.targetAmount)||0)}</span>
+              </div>
+              <div className="progress-bar"><div className="progress-bar-fill" style={{width:`${pct}%`,background:'var(--blue)'}}/></div>
+            </div>
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── ASSETS ────────────────────────────────────────────────────────────────
+function Assets() {
+  const {state,dispatch,sync,syncRemove} = useContext(Ctx)
+  const [tab,setTab] = useState('assets')
+  const [modal,setModal] = useState(null)
+  const [editing,setEditing] = useState(null)
+  const emptyA={category:'cash',name:'',amount:'',note:''}
+  const emptyD={name:'',amount:'',rate:'',term:'',startDate:'',note:''}
+  const [form,setForm] = useState(emptyA)
+  const openAdd=(type)=>{setEditing(null);setForm(type==='asset'?emptyA:emptyD);setModal(type)}
+  const openEdit=(type,item)=>{setEditing(item.id);setForm({...item});setModal(type)}
+  const saveAsset=()=>{
+    if(!form.name||!form.amount)return
+    const row={...form,amount:Number(form.amount),id:editing||uuid(),updatedAt:new Date().toISOString()}
+    if(editing){dispatch({type:'UPD_ASSET',id:editing,changes:form});sync('Assets',{...state.assets.find(a=>a.id===editing),...form})}
+    else{dispatch({type:'ADD_ASSET',row});sync('Assets',row)}
+    setModal(null)
+  }
+  const saveDebt=()=>{
+    if(!form.name||!form.amount)return
+    const row={...form,amount:Number(form.amount),rate:Number(form.rate),term:Number(form.term),id:editing||uuid(),updatedAt:new Date().toISOString()}
+    if(editing){dispatch({type:'UPD_DEBT',id:editing,changes:form});sync('Debts',{...state.debts.find(d=>d.id===editing),...form})}
+    else{dispatch({type:'ADD_DEBT',row});sync('Debts',row)}
+    setModal(null)
+  }
+  const delAsset=(id)=>{if(!confirm('Xóa?'))return;dispatch({type:'DEL_ASSET',id});syncRemove('Assets',id)}
+  const delDebt=(id)=>{if(!confirm('Xóa?'))return;dispatch({type:'DEL_DEBT',id});syncRemove('Debts',id)}
+  const totalA=state.assets.reduce((a,x)=>a+(Number(x.amount)||0),0)
+  const totalD=state.debts.reduce((a,x)=>a+(Number(x.amount)||0),0)
+  return (
+    <div>
+      <div className="section-header">
+        <h2>Tài sản & Nợ</h2>
+        <div style={{display:'flex',gap:8}}>
+          <button className="btn btn-ghost btn-sm" onClick={()=>openAdd('debt')}>+ Thêm nợ</button>
+          <button className="btn btn-primary btn-sm" onClick={()=>openAdd('asset')}>+ Thêm tài sản</button>
+        </div>
+      </div>
+      <div className="card-grid" style={{marginBottom:16}}>
+        <div className="stat-card"><div className="label">Tổng tài sản</div><div className="value" style={{color:'var(--blue)'}}>{fmt(totalA)}</div></div>
+        <div className="stat-card"><div className="label">Tổng nợ</div><div className="value" style={{color:'var(--red)'}}>{fmt(totalD)}</div></div>
+        <div className="stat-card"><div className="label">Tài sản ròng</div><div className="value" style={{color:totalA-totalD>=0?'var(--green)':'var(--red)'}}>{fmt(totalA-totalD)}</div></div>
+      </div>
+      <div className="tabs">
+        <div className={`tab ${tab==='assets'?'active':''}`} onClick={()=>setTab('assets')}>Tài sản ({state.assets.length})</div>
+        <div className={`tab ${tab==='debts'?'active':''}`} onClick={()=>setTab('debts')}>Nợ vay ({state.debts.length})</div>
+      </div>
+      {tab==='assets' && <div className="card"><table><thead><tr><th>Loại</th><th>Tên</th><th style={{textAlign:'right'}}>Số tiền</th><th>Ghi chú</th><th></th></tr></thead>
+        <tbody>{state.assets.length===0&&<tr><td colSpan={5} style={{textAlign:'center',color:'var(--muted)',padding:24}}>Chưa có tài sản</td></tr>}
+        {state.assets.map(a=>{
+          const cat=ASSET_CATS.find(c=>c.key===a.category)
+          return <tr key={a.id}><td>{cat?.icon||'📦'} <span style={{fontSize:12,color:'var(--muted)'}}>{cat?.label||a.category}</span></td>
+            <td>{a.name}</td><td style={{textAlign:'right',color:'var(--blue)',fontWeight:600}}>{fmt(Number(a.amount)||0)}</td>
+            <td style={{color:'var(--muted)',fontSize:12}}>{a.note}</td>
+            <td style={{textAlign:'right'}}><button className="btn btn-ghost btn-sm" onClick={()=>openEdit('asset',a)} style={{marginRight:4}}>✏</button><button className="btn btn-danger btn-sm" onClick={()=>delAsset(a.id)}>🗑</button></td>
+          </tr>
+        })}</tbody></table></div>}
+      {tab==='debts' && <div className="card"><table><thead><tr><th>Tên</th><th style={{textAlign:'right'}}>Dư nợ</th><th style={{textAlign:'right'}}>Lãi</th><th style={{textAlign:'right'}}>Kỳ hạn</th><th style={{textAlign:'right'}}>Trả/tháng</th><th></th></tr></thead>
+        <tbody>{state.debts.length===0&&<tr><td colSpan={6} style={{textAlign:'center',color:'var(--muted)',padding:24}}>Không có khoản nợ</td></tr>}
+        {state.debts.map(d=>{
+          const mp=monthlyPayment(Number(d.amount)||0,Number(d.rate)||0,(Number(d.term)||1)*12)
+          return <tr key={d.id}><td>{d.name}</td><td style={{textAlign:'right',color:'var(--red)',fontWeight:600}}>{fmt(Number(d.amount)||0)}</td>
+            <td style={{textAlign:'right'}}>{d.rate}%</td><td style={{textAlign:'right'}}>{d.term}năm</td>
+            <td style={{textAlign:'right',color:'var(--amber)'}}>{fmt(mp)}</td>
+            <td style={{textAlign:'right'}}><button className="btn btn-ghost btn-sm" onClick={()=>openEdit('debt',d)} style={{marginRight:4}}>✏</button><button className="btn btn-danger btn-sm" onClick={()=>delDebt(d.id)}>🗑</button></td>
+          </tr>
+        })}</tbody></table></div>}
+      {modal==='asset'&&<Modal title={editing?'Sửa tài sản':'Thêm tài sản'} onClose={()=>setModal(null)}>
+        <div className="form-group"><label>Loại</label><SelectWithOther value={form.category} onChange={v=>setForm(p=>({...p,category:v}))} options={ASSET_CATS.map(c=>({value:c.key,label:c.icon+' '+c.label}))}/></div>
+        <div className="form-group"><label>Tên</label><input type="text" value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))} placeholder="VD: Tiền mặt VCB"/></div>
+        <div className="form-group"><label>Số tiền (ngàn đ)</label><input type="number" value={form.amount} onChange={e=>setForm(p=>({...p,amount:e.target.value}))}/></div>
+        <div className="form-group"><label>Ghi chú</label><input type="text" value={form.note||''} onChange={e=>setForm(p=>({...p,note:e.target.value}))}/></div>
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}><button className="btn btn-ghost" onClick={()=>setModal(null)}>Hủy</button><button className="btn btn-primary" onClick={saveAsset}>{editing?'Lưu':'Thêm'}</button></div>
+      </Modal>}
+      {modal==='debt'&&<Modal title={editing?'Sửa khoản nợ':'Thêm khoản nợ'} onClose={()=>setModal(null)}>
+        <div className="form-group"><label>Tên</label><input type="text" value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))}/></div>
+        <div className="form-group"><label>Dư nợ (ngàn đ)</label><input type="number" value={form.amount} onChange={e=>setForm(p=>({...p,amount:e.target.value}))}/></div>
+        <div className="form-group"><label>Lãi suất (%/năm)</label><input type="number" step="0.1" value={form.rate||''} onChange={e=>setForm(p=>({...p,rate:e.target.value}))}/></div>
+        <div className="form-group"><label>Kỳ hạn (năm)</label><input type="number" value={form.term||''} onChange={e=>setForm(p=>({...p,term:e.target.value}))}/></div>
+        <div className="form-group"><label>Ngày bắt đầu</label><input type="month" value={form.startDate||''} onChange={e=>setForm(p=>({...p,startDate:e.target.value}))}/></div>
+        <div className="form-group"><label>Ghi chú</label><input type="text" value={form.note||''} onChange={e=>setForm(p=>({...p,note:e.target.value}))}/></div>
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}><button className="btn btn-ghost" onClick={()=>setModal(null)}>Hủy</button><button className="btn btn-primary" onClick={saveDebt}>{editing?'Lưu':'Thêm'}</button></div>
+      </Modal>}
+    </div>
+  )
+}
+
+// ── CASHFLOW ──────────────────────────────────────────────────────────────
+function CashFlow() {
+  const {state,dispatch,sync,syncRemove} = useContext(Ctx)
+  const {income,expenses,currentMonth,currentYear} = state
+  const [tab,setTab] = useState('income')
+  const [modal,setModal] = useState(null)
+  const [editing,setEditing] = useState(null)
+  const [form,setForm] = useState({})
+  const mIncome  = income.filter(i=>Number(i.month)===currentMonth&&Number(i.year)===currentYear)
+  const mExpense = expenses.filter(e=>Number(e.month)===currentMonth&&Number(e.year)===currentYear)
+  const totalIn  = mIncome.reduce((a,i)=>a+(Number(i.amount)||0),0)
+  const totalOut = mExpense.reduce((a,i)=>a+(Number(i.amount)||0),0)
+  const openAdd=(type)=>{setEditing(null);setForm({name:'',amount:'',category:type==='income'?'salary':'food',note:'',month:currentMonth,year:currentYear});setModal(type)}
+  const openEdit=(type,item)=>{setEditing(item.id);setForm({...item});setModal(type)}
+  const saveIncome=()=>{
+    if(!form.name||!form.amount)return
+    const row={...form,amount:Number(form.amount),month:currentMonth,year:currentYear,id:editing||uuid(),updatedAt:new Date().toISOString()}
+    if(editing){dispatch({type:'UPD_INCOME',id:editing,changes:row});sync('Income',row)}
+    else{dispatch({type:'ADD_INCOME',row});sync('Income',row)}
+    setModal(null)
+  }
+  const saveExpense=()=>{
+    if(!form.name||!form.amount)return
+    const row={...form,amount:Number(form.amount),month:currentMonth,year:currentYear,id:editing||uuid(),updatedAt:new Date().toISOString()}
+    if(editing){dispatch({type:'UPD_EXPENSE',id:editing,changes:row});sync('Expenses',row)}
+    else{dispatch({type:'ADD_EXPENSE',row});sync('Expenses',row)}
+    setModal(null)
+  }
+  return (
+    <div>
+      <div className="section-header">
+        <h2>Dòng tiền</h2>
+        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          <select value={currentMonth} onChange={e=>dispatch({type:'SET_MONTH_YEAR',month:Number(e.target.value),year:currentYear})} style={{width:100,padding:'6px 8px'}}>
+            {Array.from({length:12},(_,i)=><option key={i+1} value={i+1}>Tháng {i+1}</option>)}
+          </select>
+          <input type="number" value={currentYear} min={2020} max={2035} onChange={e=>dispatch({type:'SET_MONTH_YEAR',month:currentMonth,year:Number(e.target.value)})} style={{width:72,padding:'6px 8px'}}/>
+        </div>
+      </div>
+      <div className="card-grid" style={{marginBottom:16}}>
+        <div className="stat-card"><div className="label">Tổng thu</div><div className="value" style={{color:'var(--green)'}}>{fmt(totalIn)}</div></div>
+        <div className="stat-card"><div className="label">Tổng chi</div><div className="value" style={{color:'var(--red)'}}>{fmt(totalOut)}</div></div>
+        <div className="stat-card"><div className="label">Dư</div><div className="value" style={{color:totalIn-totalOut>=0?'var(--green)':'var(--red)'}}>{fmt(totalIn-totalOut)}</div></div>
+      </div>
+      <div className="tabs">
+        <div className={`tab ${tab==='income'?'active':''}`} onClick={()=>setTab('income')}>
+          Thu nhập ({mIncome.length}) <button className="btn btn-primary btn-sm" onClick={e=>{e.stopPropagation();openAdd('income')}} style={{marginLeft:8}}>+</button>
+        </div>
+        <div className={`tab ${tab==='expense'?'active':''}`} onClick={()=>setTab('expense')}>
+          Chi tiêu ({mExpense.length}) <button className="btn btn-ghost btn-sm" onClick={e=>{e.stopPropagation();openAdd('expense')}} style={{marginLeft:8}}>+</button>
+        </div>
+      </div>
+      {tab==='income'&&<div className="card"><table><thead><tr><th>Tên</th><th>Danh mục</th><th style={{textAlign:'right'}}>Số tiền</th><th></th></tr></thead>
+        <tbody>{mIncome.length===0&&<tr><td colSpan={4} style={{textAlign:'center',color:'var(--muted)',padding:24}}>Chưa có thu nhập tháng này</td></tr>}
+        {mIncome.map(i=><tr key={i.id}><td>{i.name}</td><td><span className="chip">{INCOME_CATS.find(c=>c.value===i.category)?.label||i.category}</span></td>
+          <td style={{textAlign:'right',color:'var(--green)',fontWeight:600}}>{fmt(Number(i.amount)||0)}</td>
+          <td style={{textAlign:'right'}}><button className="btn btn-ghost btn-sm" onClick={()=>openEdit('income',i)} style={{marginRight:4}}>✏</button><button className="btn btn-danger btn-sm" onClick={()=>{if(!confirm('Xóa?'))return;dispatch({type:'DEL_INCOME',id:i.id});syncRemove('Income',i.id)}}>🗑</button></td>
+        </tr>)}</tbody></table></div>}
+      {tab==='expense'&&<div className="card"><table><thead><tr><th>Tên</th><th>Danh mục</th><th style={{textAlign:'right'}}>Số tiền</th><th></th></tr></thead>
+        <tbody>{mExpense.length===0&&<tr><td colSpan={4} style={{textAlign:'center',color:'var(--muted)',padding:24}}>Chưa có chi tiêu tháng này</td></tr>}
+        {mExpense.map(e=><tr key={e.id}><td>{e.name}</td><td><span className="chip">{EXPENSE_CATS.find(c=>c.value===e.category)?.label||e.category}</span></td>
+          <td style={{textAlign:'right',color:'var(--amber)',fontWeight:600}}>{fmt(Number(e.amount)||0)}</td>
+          <td style={{textAlign:'right'}}><button className="btn btn-ghost btn-sm" onClick={()=>openEdit('expense',e)} style={{marginRight:4}}>✏</button><button className="btn btn-danger btn-sm" onClick={()=>{if(!confirm('Xóa?'))return;dispatch({type:'DEL_EXPENSE',id:e.id});syncRemove('Expenses',e.id)}}>🗑</button></td>
+        </tr>)}</tbody></table></div>}
+      {modal==='income'&&<Modal title={editing?'Sửa thu nhập':'Thêm thu nhập'} onClose={()=>setModal(null)}>
+        <div className="form-group"><label>Tên</label><input type="text" value={form.name||''} onChange={e=>setForm(p=>({...p,name:e.target.value}))} placeholder="VD: Lương tháng 6"/></div>
+        <div className="form-group"><label>Số tiền (ngàn đ)</label><input type="number" step="0.1" value={form.amount||''} onChange={e=>setForm(p=>({...p,amount:e.target.value}))}/></div>
+        <div className="form-group"><label>Danh mục</label><SelectWithOther value={form.category||'salary'} onChange={v=>setForm(p=>({...p,category:v}))} options={INCOME_CATS}/></div>
+        <div className="form-group"><label>Ghi chú</label><input type="text" value={form.note||''} onChange={e=>setForm(p=>({...p,note:e.target.value}))}/></div>
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}><button className="btn btn-ghost" onClick={()=>setModal(null)}>Hủy</button><button className="btn btn-primary" onClick={saveIncome}>{editing?'Lưu':'Thêm'}</button></div>
+      </Modal>}
+      {modal==='expense'&&<Modal title={editing?'Sửa chi tiêu':'Thêm chi tiêu'} onClose={()=>setModal(null)}>
+        <div className="form-group"><label>Tên</label><input type="text" value={form.name||''} onChange={e=>setForm(p=>({...p,name:e.target.value}))} placeholder="VD: Ăn uống"/></div>
+        <div className="form-group"><label>Số tiền (ngàn đ)</label><input type="number" step="0.1" value={form.amount||''} onChange={e=>setForm(p=>({...p,amount:e.target.value}))}/></div>
+        <div className="form-group"><label>Danh mục</label><SelectWithOther value={form.category||'food'} onChange={v=>setForm(p=>({...p,category:v}))} options={EXPENSE_CATS}/></div>
+        <div className="form-group"><label>Ghi chú</label><input type="text" value={form.note||''} onChange={e=>setForm(p=>({...p,note:e.target.value}))}/></div>
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}><button className="btn btn-ghost" onClick={()=>setModal(null)}>Hủy</button><button className="btn btn-primary" onClick={saveExpense}>{editing?'Lưu':'Thêm'}</button></div>
+      </Modal>}
+    </div>
+  )
+}
+
+// ── REPORTS ───────────────────────────────────────────────────────────────
+function Reports() {
+  const {state,dispatch} = useContext(Ctx)
+  const {income,expenses,investments,currentMonth,currentYear} = state
+  const mIncome  = income.filter(i=>Number(i.month)===currentMonth&&Number(i.year)===currentYear)
+  const mExpense = expenses.filter(e=>Number(e.month)===currentMonth&&Number(e.year)===currentYear)
+  const totalIn  = mIncome.reduce((a,i)=>a+(Number(i.amount)||0),0)
+  const totalOut = mExpense.reduce((a,i)=>a+(Number(i.amount)||0),0)
+  const yearData = Array.from({length:12},(_,i)=>{
+    const m=i+1
+    const inc=income.filter(x=>Number(x.month)===m&&Number(x.year)===currentYear).reduce((a,x)=>a+(Number(x.amount)||0),0)
+    const exp=expenses.filter(x=>Number(x.month)===m&&Number(x.year)===currentYear).reduce((a,x)=>a+(Number(x.amount)||0),0)
+    return {month:`T${m}`,thu:inc,chi:exp,du:inc-exp}
+  })
+  const expCatData=EXPENSE_CATS.slice(0,-1).map(c=>({name:c.label,value:mExpense.filter(e=>e.category===c.value).reduce((a,e)=>a+(Number(e.amount)||0),0)})).filter(x=>x.value>0)
+  const PIE_COLORS=['#378ADD','#1D9E75','#EF9F27','#7F77DD','#D85A30','#888780','#36b9cc','#e74a3b']
+  const exportExcel=()=>{
+    const wb=XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Loại','Tên','Danh mục','Số tiền (M)','Ghi chú'],...mIncome.map(i=>['Thu',i.name,i.category,i.amount,i.note||'']),...mExpense.map(e=>['Chi',e.name,e.category,e.amount,e.note||''])]),`T${currentMonth}-${currentYear}`)
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Tháng','Thu','Chi','Dư'],...yearData.map(r=>[r.month,r.thu,r.chi,r.du])]),`Năm ${currentYear}`)
+    XLSX.writeFile(wb,`baocao_T${currentMonth}_${currentYear}.xlsx`)
+  }
+  return (
+    <div>
+      <div className="section-header">
+        <h2>Báo cáo</h2>
+        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          <select value={currentMonth} onChange={e=>dispatch({type:'SET_MONTH_YEAR',month:Number(e.target.value),year:currentYear})} style={{width:100,padding:'6px 8px'}}>
+            {Array.from({length:12},(_,i)=><option key={i+1} value={i+1}>Tháng {i+1}</option>)}
+          </select>
+          <input type="number" value={currentYear} min={2020} max={2035} onChange={e=>dispatch({type:'SET_MONTH_YEAR',month:currentMonth,year:Number(e.target.value)})} style={{width:72,padding:'6px 8px'}}/>
+          <button className="btn btn-ghost btn-sm" onClick={exportExcel}>⬇ Excel</button>
+        </div>
+      </div>
+      <div className="card-grid" style={{marginBottom:16}}>
+        <div className="stat-card"><div className="label">Thu tháng {currentMonth}</div><div className="value" style={{color:'var(--green)'}}>{fmt(totalIn)}</div></div>
+        <div className="stat-card"><div className="label">Chi tháng {currentMonth}</div><div className="value" style={{color:'var(--red)'}}>{fmt(totalOut)}</div></div>
+        <div className="stat-card"><div className="label">Dư</div><div className="value" style={{color:totalIn-totalOut>=0?'var(--green)':'var(--red)'}}>{fmt(totalIn-totalOut)}</div></div>
+        <div className="stat-card"><div className="label">Tỷ lệ tiết kiệm</div><div className="value">{totalIn>0?((totalIn-totalOut)/totalIn*100).toFixed(0):0}%</div></div>
+      </div>
+      <div className="grid2" style={{marginBottom:16}}>
+        <div className="card">
+          <div style={{fontWeight:600,marginBottom:14,fontSize:14}}>Thu/Chi năm {currentYear}</div>
+          {hasCharts?<ResponsiveContainer width="100%" height={200}><BarChart data={yearData} barSize={10}><CartesianGrid strokeDasharray="3 3" stroke="var(--border)"/><XAxis dataKey="month" tick={{fill:'var(--muted)',fontSize:10}} axisLine={false} tickLine={false}/><YAxis tick={{fill:'var(--muted)',fontSize:10}} axisLine={false} tickLine={false} tickFormatter={fmtShort}/><Tooltip contentStyle={{background:'var(--bg3)',border:'1px solid var(--border)',borderRadius:8,fontSize:12}} formatter={v=>fmt(v)}/><Legend wrapperStyle={{fontSize:11}}/><Bar dataKey="thu" name="Thu" fill="var(--green)" radius={[3,3,0,0]}/><Bar dataKey="chi" name="Chi" fill="var(--red)" radius={[3,3,0,0]}/></BarChart></ResponsiveContainer>
+          :<table style={{fontSize:12}}><thead><tr><th>Tháng</th><th>Thu</th><th>Chi</th><th>Dư</th></tr></thead><tbody>{yearData.map(d=><tr key={d.month}><td>{d.month}</td><td style={{color:'var(--green)'}}>{fmt(d.thu)}</td><td style={{color:'var(--red)'}}>{fmt(d.chi)}</td><td style={{color:d.du>=0?'var(--green)':'var(--red)'}}>{fmt(d.du)}</td></tr>)}</tbody></table>}
+        </div>
+        <div className="card">
+          <div style={{fontWeight:600,marginBottom:14,fontSize:14}}>Chi tiêu tháng {currentMonth}</div>
+          {hasCharts&&expCatData.length>0?<ResponsiveContainer width="100%" height={200}><PieChart><Pie data={expCatData} cx="50%" cy="50%" outerRadius={80} dataKey="value" nameKey="name">{expCatData.map((_,i)=><Cell key={i} fill={PIE_COLORS[i%PIE_COLORS.length]}/>)}</Pie><Tooltip contentStyle={{background:'var(--bg3)',border:'1px solid var(--border)',borderRadius:8,fontSize:12}} formatter={v=>fmt(v)}/></PieChart></ResponsiveContainer>
+          :expCatData.length>0?<div>{expCatData.map((d,i)=><div key={d.name} style={{display:'flex',justifyContent:'space-between',padding:'5px 0',borderBottom:'1px solid var(--border)',fontSize:13}}><span style={{color:PIE_COLORS[i%PIE_COLORS.length]}}>{d.name}</span><span>{fmt(d.value)}</span></div>)}</div>
+          :<div style={{height:200,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--muted)',fontSize:13}}>Chưa có chi tiêu</div>}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── TOOLS ─────────────────────────────────────────────────────────────────
+function Tools() {
+  const [tool,setTool] = useState('loan')
+  const [loan,setLoan] = useState({principal:500000,rate:10,term:10})
+  const mp=monthlyPayment(loan.principal,loan.rate,loan.term*12)
+  const [sav,setSav] = useState({init:50000,monthly:5000,rate:7,years:10})
+  const savResult=calcSavings(sav.init,sav.monthly,sav.rate,sav.years)
+  const savTotal=sav.init+sav.monthly*sav.years*12
+  const [inv,setInv] = useState({amount:500000,years:10})
+  const CHAN_COLORS = ['#20c997','#a78bfa','#ffa94d','#f06595','#4f8ef7','#f5c842','#e67e22','#2ecc71']
+  const [channels, setChannels] = useState([
+    {id:'1',name:'Tiết kiệm NH',  rate:7},
+    {id:'2',name:'Trái phiếu',    rate:10},
+    {id:'3',name:'Chứng khoán',   rate:15},
+    {id:'4',name:'Bất động sản',  rate:12},
+  ])
+  const invResults = channels.map((c,i)=>({...c, color:CHAN_COLORS[i%CHAN_COLORS.length], result:calcSavings(inv.amount,0,c.rate,inv.years)}))
+  const addChannel = () => setChannels(p=>[...p,{id:uuid(),name:'Kênh mới',rate:8}])
+  const updChannel = (id,field,val) => setChannels(p=>p.map(c=>c.id===id?{...c,[field]:val}:c))
+  const delChannel = (id) => setChannels(p=>p.filter(c=>c.id!==id))
+  return (
+    <div>
+      <div className="section-header"><h2>Công cụ tính toán</h2></div>
+      <div className="tabs">
+        <div className={`tab ${tool==='loan'?'active':''}`} onClick={()=>setTool('loan')}>🏦 Vay NH</div>
+        <div className={`tab ${tool==='savings'?'active':''}`} onClick={()=>setTool('savings')}>💰 Tiết kiệm</div>
+        <div className={`tab ${tool==='compare'?'active':''}`} onClick={()=>setTool('compare')}>📊 So sánh kênh</div>
+      </div>
+      {tool==='loan'&&<div className="card">
+        <div style={{fontWeight:600,marginBottom:16}}>Tính khoản vay ngân hàng</div>
+        <SliderWithInput label="Số tiền vay" value={loan.principal} min={10000} max={5000000} step={10000} onChange={v=>setLoan(p=>({...p,principal:v}))}/>
+        <SliderWithInput label="Lãi suất (%/năm)" value={loan.rate} min={5} max={25} step={0.1} onChange={v=>setLoan(p=>({...p,rate:v}))} suffix="%/năm"/>
+        <SliderWithInput label="Kỳ hạn" value={loan.term} min={1} max={30} step={1} onChange={v=>setLoan(p=>({...p,term:v}))} suffix="năm"/>
+        <div style={{background:'var(--bg3)',borderRadius:8,padding:16,marginTop:8}}>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}><span style={{color:'var(--muted)'}}>Trả hàng tháng</span><span style={{fontSize:20,fontWeight:700,color:'var(--amber)'}}>{fmt(mp)}</span></div>
+          <div style={{display:'flex',justifyContent:'space-between',fontSize:13,marginBottom:4}}><span style={{color:'var(--muted)'}}>Tổng tiền trả</span><span>{fmt(mp*loan.term*12)}</span></div>
+          <div style={{display:'flex',justifyContent:'space-between',fontSize:13}}><span style={{color:'var(--muted)'}}>Tổng tiền lãi</span><span style={{color:'var(--red)'}}>{fmt(mp*loan.term*12-loan.principal)}</span></div>
+        </div>
+      </div>}
+      {tool==='savings'&&<div className="card">
+        <div style={{fontWeight:600,marginBottom:16}}>Tiết kiệm lãi kép</div>
+        <SliderWithInput label="Vốn ban đầu" value={sav.init} min={0} max={2000000} step={5000} onChange={v=>setSav(p=>({...p,init:v}))}/>
+        <SliderWithInput label="Gửi thêm/tháng" value={sav.monthly} min={0} max={100000} step={500} onChange={v=>setSav(p=>({...p,monthly:v}))}/>
+        <SliderWithInput label="Lãi suất (%/năm)" value={sav.rate} min={1} max={20} step={0.1} onChange={v=>setSav(p=>({...p,rate:v}))} suffix="%/năm"/>
+        <SliderWithInput label="Thời gian" value={sav.years} min={1} max={40} step={1} onChange={v=>setSav(p=>({...p,years:v}))} suffix="năm"/>
+        <div style={{background:'var(--bg3)',borderRadius:8,padding:16,marginTop:8}}>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}><span style={{color:'var(--muted)'}}>Sau {sav.years} năm</span><span style={{fontSize:20,fontWeight:700,color:'var(--green)'}}>{fmt(savResult)}</span></div>
+          <div style={{display:'flex',justifyContent:'space-between',fontSize:13}}><span style={{color:'var(--muted)'}}>Lãi kép</span><span style={{color:'var(--green)'}}>{fmt(savResult-savTotal)} (+{savTotal>0?((savResult-savTotal)/savTotal*100).toFixed(0):0}%)</span></div>
+        </div>
+      </div>}
+      {tool==='compare'&&<div className="card">
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+          <div style={{fontWeight:700,fontSize:15}}>So sánh kênh đầu tư</div>
+          <button className="btn btn-primary btn-sm" onClick={addChannel}>+ Thêm kênh</button>
+        </div>
+        <SliderWithInput label="Số vốn ban đầu" value={inv.amount} min={10000} max={5000000} step={10000} onChange={v=>setInv(p=>({...p,amount:v}))}/>
+        <SliderWithInput label="Thời gian đầu tư" value={inv.years} min={1} max={30} step={1} onChange={v=>setInv(p=>({...p,years:v}))} suffix="năm"/>
+
+        {/* Bảng chỉnh sửa kênh */}
+        <div style={{background:'var(--bg4)',borderRadius:10,padding:'12px 14px',marginBottom:14}}>
+          <div style={{fontSize:11,color:'var(--muted)',marginBottom:10,textTransform:'uppercase',letterSpacing:'.5px',fontWeight:700}}>
+            Chỉnh sửa kênh &amp; lãi suất
+          </div>
+          {channels.map((c,i)=>(
+            <div key={c.id} style={{display:'flex',gap:8,alignItems:'center',marginBottom:8}}>
+              <div style={{width:8,height:8,borderRadius:'50%',background:CHAN_COLORS[i%CHAN_COLORS.length],flexShrink:0}}/>
+              <input type="text" value={c.name}
+                onChange={e=>updChannel(c.id,'name',e.target.value)}
+                style={{flex:1,padding:'6px 10px',fontSize:13}}
+                placeholder="Tên kênh"/>
+              <div style={{display:'flex',alignItems:'center',gap:4,flexShrink:0}}>
+                <input type="number" value={c.rate} min={0} max={100} step={0.5}
+                  onChange={e=>updChannel(c.id,'rate',Number(e.target.value))}
+                  style={{width:64,padding:'6px 8px',fontSize:13,textAlign:'right'}}/>
+                <span style={{fontSize:12,color:'var(--muted)',flexShrink:0}}>%/năm</span>
+              </div>
+              {channels.length > 1 && (
+                <button onClick={()=>delChannel(c.id)}
+                  style={{background:'none',border:'none',color:'var(--muted)',cursor:'pointer',fontSize:16,padding:'2px 4px',lineHeight:1,flexShrink:0}}
+                  title="Xóa kênh">×</button>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Kết quả so sánh — sắp xếp theo lợi nhuận giảm dần */}
+        <div style={{display:'flex',flexDirection:'column',gap:8}}>
+          {[...invResults].sort((a,b)=>b.result-a.result).map((c,rank)=>{
+            const profit = c.result - inv.amount
+            const pct = inv.amount > 0 ? (profit/inv.amount*100).toFixed(0) : 0
+            return (
+              <div key={c.id} style={{padding:'12px 14px',background:'var(--bg3)',borderRadius:10,border:`1px solid ${c.color}28`,position:'relative',overflow:'hidden'}}>
+                <div style={{position:'absolute',top:0,left:0,bottom:0,width:3,background:c.color,borderRadius:'0 0 0 0'}}/>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:5,paddingLeft:8}}>
+                  <div style={{display:'flex',alignItems:'center',gap:8}}>
+                    {rank===0&&<span style={{fontSize:11,padding:'1px 6px',borderRadius:10,background:`${c.color}25`,color:c.color,fontWeight:700}}>Tốt nhất</span>}
+                    <span style={{fontWeight:700,fontSize:14}}>{c.name}</span>
+                    <span style={{fontSize:11,color:'var(--muted)'}}>{c.rate}%/năm</span>
+                  </div>
+                  <span style={{fontWeight:800,fontSize:16,color:c.color}}>{fmt(c.result)}</span>
+                </div>
+                <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'var(--muted)',paddingLeft:8}}>
+                  <span>Lợi nhuận: <span style={{color:c.color,fontWeight:600}}>+{fmt(profit)}</span></span>
+                  <span>Tăng trưởng: <span style={{color:c.color,fontWeight:600}}>+{pct}%</span></span>
+                </div>
+                {/* Progress bar tương đối */}
+                <div style={{marginTop:8,paddingLeft:8}}>
+                  <div style={{background:'var(--bg4)',borderRadius:4,height:4,overflow:'hidden'}}>
+                    <div style={{height:'100%',width:`${Math.min(100,(c.result/invResults[0].result)*100)}%`,background:c.color,borderRadius:4,transition:'width .5s ease'}}/>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>}
+    </div>
+  )
+}
+
+// ── TRACKER ───────────────────────────────────────────────────────────────
+function Tracker() {
+  const {state,dispatch,sync,syncRemove} = useContext(Ctx)
+  const [modal,setModal] = useState(false)
+  const [editing,setEditing] = useState(null)
+  const empty={name:'',type:'realestate',buyPrice:'',currentPrice:'',buyDate:'',note:''}
+  const [form,setForm] = useState(empty)
+  const totalBuy=state.investments.reduce((a,i)=>a+(Number(i.buyPrice)||0),0)
+  const totalCur=state.investments.reduce((a,i)=>a+(Number(i.currentPrice)||0),0)
+  const pnl=totalCur-totalBuy
+  const save=()=>{
+    if(!form.name)return
+    const row={...form,buyPrice:Number(form.buyPrice),currentPrice:Number(form.currentPrice),id:editing||uuid(),updatedAt:new Date().toISOString()}
+    if(editing){dispatch({type:'UPD_INVESTMENT',id:editing,changes:row});sync('Investments',row)}
+    else{dispatch({type:'ADD_INVESTMENT',row});sync('Investments',row)}
+    setModal(false)
+  }
+  return (
+    <div>
+      <div className="section-header"><h2>Danh mục đầu tư</h2><button className="btn btn-primary btn-sm" onClick={()=>{setEditing(null);setForm(empty);setModal(true)}}>+ Thêm</button></div>
+      <div className="card-grid" style={{marginBottom:16}}>
+        <div className="stat-card"><div className="label">Tổng vốn</div><div className="value" style={{color:'var(--blue)'}}>{fmt(totalBuy)}</div></div>
+        <div className="stat-card"><div className="label">Giá trị hiện tại</div><div className="value">{fmt(totalCur)}</div></div>
+        <div className="stat-card"><div className="label">Lời / Lỗ</div><div className="value" style={{color:pnl>=0?'var(--green)':'var(--red)'}}>{pnl>=0?'+':''}{fmt(pnl)}</div><div style={{fontSize:11,color:'var(--muted)',marginTop:2}}>{totalBuy>0?(pnl/totalBuy*100).toFixed(1):0}%</div></div>
+      </div>
+      <div className="card"><table><thead><tr><th>Tên</th><th>Loại</th><th style={{textAlign:'right'}}>Vốn</th><th style={{textAlign:'right'}}>Hiện tại</th><th style={{textAlign:'right'}}>Lời/lỗ</th><th></th></tr></thead>
+        <tbody>{state.investments.length===0&&<tr><td colSpan={6} style={{textAlign:'center',color:'var(--muted)',padding:24}}>Chưa có tài sản đầu tư</td></tr>}
+        {state.investments.map(i=>{const pl=(Number(i.currentPrice)||0)-(Number(i.buyPrice)||0);const pct=i.buyPrice>0?(pl/Number(i.buyPrice)*100).toFixed(1):0;return(
+          <tr key={i.id}><td style={{fontWeight:500}}>{i.name}</td><td><span className="chip">{INV_TYPES.find(t=>t.value===i.type)?.label||i.type}</span></td>
+          <td style={{textAlign:'right'}}>{fmt(Number(i.buyPrice)||0)}</td><td style={{textAlign:'right'}}>{fmt(Number(i.currentPrice)||0)}</td>
+          <td style={{textAlign:'right',color:pl>=0?'var(--green)':'var(--red)',fontWeight:600}}>{pl>=0?'+':''}{fmt(pl)} <span style={{fontSize:11}}>({pl>=0?'+':''}{pct}%)</span></td>
+          <td style={{textAlign:'right'}}><button className="btn btn-ghost btn-sm" onClick={()=>{setEditing(i.id);setForm({...i});setModal(true)}} style={{marginRight:4}}>✏</button><button className="btn btn-danger btn-sm" onClick={()=>{if(!confirm('Xóa?'))return;dispatch({type:'DEL_INVESTMENT',id:i.id});syncRemove('Investments',i.id)}}>🗑</button></td>
+        </tr>)})}</tbody></table></div>
+      {modal&&<Modal title={editing?'Sửa':'Thêm tài sản đầu tư'} onClose={()=>setModal(false)}>
+        <div className="form-group"><label>Tên</label><input type="text" value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))}/></div>
+        <div className="form-group"><label>Loại</label><SelectWithOther value={form.type} onChange={v=>setForm(p=>({...p,type:v}))} options={INV_TYPES}/></div>
+        <div className="form-group"><label>Giá mua (ngàn đ)</label><input type="number" step="0.1" value={form.buyPrice} onChange={e=>setForm(p=>({...p,buyPrice:e.target.value}))}/></div>
+        <div className="form-group"><label>Giá hiện tại (ngàn đ)</label><input type="number" step="0.1" value={form.currentPrice} onChange={e=>setForm(p=>({...p,currentPrice:e.target.value}))}/></div>
+        <div className="form-group"><label>Ngày mua</label><input type="month" value={form.buyDate||''} onChange={e=>setForm(p=>({...p,buyDate:e.target.value}))}/></div>
+        <div className="form-group"><label>Ghi chú</label><input type="text" value={form.note||''} onChange={e=>setForm(p=>({...p,note:e.target.value}))}/></div>
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}><button className="btn btn-ghost" onClick={()=>setModal(false)}>Hủy</button><button className="btn btn-primary" onClick={save}>{editing?'Lưu':'Thêm'}</button></div>
+      </Modal>}
+    </div>
+  )
+}
+
+// ── GOALS ─────────────────────────────────────────────────────────────────
+function Goals() {
+  const {state,dispatch,sync,syncRemove} = useContext(Ctx)
+  const [modal,setModal] = useState(false)
+  const [editing,setEditing] = useState(null)
+  const [form,setForm] = useState({name:'',targetAmount:'',currentAmount:'',deadline:'',note:''})
+  const {income,expenses,currentMonth,currentYear} = state
+  const totalIn=income.filter(i=>Number(i.month)===currentMonth&&Number(i.year)===currentYear).reduce((a,i)=>a+(Number(i.amount)||0),0)
+  const totalOut=expenses.filter(e=>Number(e.month)===currentMonth&&Number(e.year)===currentYear).reduce((a,i)=>a+(Number(i.amount)||0),0)
+  const surplus=totalIn-totalOut
+  const save=()=>{
+    if(!form.name||!form.targetAmount)return
+    const row={...form,targetAmount:Number(form.targetAmount),currentAmount:Number(form.currentAmount||0),id:editing||uuid(),updatedAt:new Date().toISOString()}
+    if(editing){dispatch({type:'UPD_GOAL',id:editing,changes:row});sync('Goals',row)}
+    else{dispatch({type:'ADD_GOAL',row});sync('Goals',row)}
+    setModal(false)
+  }
+  return (
+    <div>
+      <div className="section-header"><h2>Mục tiêu tài chính</h2><button className="btn btn-primary btn-sm" onClick={()=>{setEditing(null);setForm({name:'',targetAmount:'',currentAmount:'',deadline:'',note:''});setModal(true)}}>+ Thêm</button></div>
+      {surplus>0&&<div className="card" style={{marginBottom:12,background:'var(--bg3)',border:'1px solid rgba(29,158,117,.3)'}}><div style={{fontSize:13,color:'var(--muted)'}}>Dư tháng {currentMonth}: <strong style={{color:'var(--green)'}}>{fmt(surplus)}</strong> — dùng để ước tính thời gian đạt mục tiêu</div></div>}
+      <div style={{display:'flex',flexDirection:'column',gap:12}}>
+        {state.goals.length===0&&<div className="card" style={{textAlign:'center',color:'var(--muted)',padding:32}}>Chưa có mục tiêu nào</div>}
+        {state.goals.map(g=>{
+          const cur=Number(g.currentAmount)||0,tar=Number(g.targetAmount)||0
+          const pct=tar>0?Math.min(100,cur/tar*100):0
+          const months=monthsToGoal(cur,tar,surplus)
+          return <div key={g.id} className="card">
+            <div style={{display:'flex',justifyContent:'space-between',marginBottom:10}}>
+              <div><div style={{fontWeight:600,fontSize:15}}>{g.name}</div>{g.deadline&&<div style={{fontSize:11,color:'var(--muted)',marginTop:2}}>Deadline: {g.deadline}</div>}</div>
+              <div style={{display:'flex',gap:6}}><button className="btn btn-ghost btn-sm" onClick={()=>{setEditing(g.id);setForm({...g});setModal(true)}}>✏</button><button className="btn btn-danger btn-sm" onClick={()=>{if(!confirm('Xóa?'))return;dispatch({type:'DEL_GOAL',id:g.id});syncRemove('Goals',g.id)}}>🗑</button></div>
+            </div>
+            <div style={{display:'flex',justifyContent:'space-between',fontSize:13,marginBottom:6}}><span style={{color:'var(--blue)',fontWeight:600}}>{fmt(cur)}</span><span style={{color:'var(--muted)'}}>/ {fmt(tar)}</span></div>
+            <div className="progress-bar" style={{marginBottom:8}}><div className="progress-bar-fill" style={{width:`${pct}%`,background:pct>=100?'var(--green)':'var(--blue)'}}/></div>
+            <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'var(--muted)'}}><span>{pct.toFixed(0)}% — còn {fmt(tar-cur)}</span>{months!==null&&<span style={{color:'var(--amber)'}}>⏱ {formatMonths(months)}</span>}</div>
+          </div>
+        })}
+      </div>
+      {modal&&<Modal title={editing?'Sửa mục tiêu':'Thêm mục tiêu'} onClose={()=>setModal(false)}>
+        <div className="form-group"><label>Tên mục tiêu</label><input type="text" value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))} placeholder="VD: Mua xe ô tô"/></div>
+        <div className="form-group"><label>Số tiền cần (ngàn đ)</label><input type="number" value={form.targetAmount} onChange={e=>setForm(p=>({...p,targetAmount:e.target.value}))}/></div>
+        <div className="form-group"><label>Đã có (ngàn đ)</label><input type="number" step="0.1" value={form.currentAmount} onChange={e=>setForm(p=>({...p,currentAmount:e.target.value}))}/></div>
+        <div className="form-group"><label>Deadline</label><input type="month" value={form.deadline||''} onChange={e=>setForm(p=>({...p,deadline:e.target.value}))}/></div>
+        <div className="form-group"><label>Ghi chú</label><input type="text" value={form.note||''} onChange={e=>setForm(p=>({...p,note:e.target.value}))}/></div>
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}><button className="btn btn-ghost" onClick={()=>setModal(false)}>Hủy</button><button className="btn btn-primary" onClick={save}>{editing?'Lưu':'Thêm'}</button></div>
+      </Modal>}
+    </div>
+  )
+}
+
+// ── BUSINESS ──────────────────────────────────────────────────────────────
+function Business() {
+  const {state,dispatch,sync,syncRemove} = useContext(Ctx)
+  const [modal,setModal] = useState(false)
+  const [editing,setEditing] = useState(null)
+  const [form,setForm] = useState({name:'',startDate:'',status:'planning',revenue:'',cost:'',note:''})
+  const save=()=>{
+    if(!form.name)return
+    const profit=(Number(form.revenue)||0)-(Number(form.cost)||0)
+    const row={...form,revenue:Number(form.revenue)||0,cost:Number(form.cost)||0,profit,id:editing||uuid(),updatedAt:new Date().toISOString()}
+    if(editing){dispatch({type:'UPD_BIZ',id:editing,changes:row});sync('BusinessPlans',row)}
+    else{dispatch({type:'ADD_BIZ',row});sync('BusinessPlans',row)}
+    setModal(false)
+  }
+  const statusColors={planning:'var(--blue)',active:'var(--green)',paused:'var(--amber)',completed:'var(--purple)'}
+  return (
+    <div>
+      <div className="section-header"><h2>Kế hoạch kinh doanh</h2><button className="btn btn-primary btn-sm" onClick={()=>{setEditing(null);setForm({name:'',startDate:'',status:'planning',revenue:'',cost:'',note:''});setModal(true)}}>+ Thêm</button></div>
+      <div style={{display:'flex',flexDirection:'column',gap:12}}>
+        {state.businessPlans.length===0&&<div className="card" style={{textAlign:'center',color:'var(--muted)',padding:32}}>Chưa có kế hoạch</div>}
+        {state.businessPlans.map(p=>{
+          const profit=(Number(p.revenue)||0)-(Number(p.cost)||0)
+          const margin=p.revenue>0?(profit/Number(p.revenue)*100).toFixed(1):0
+          const color=statusColors[p.status]||'var(--muted)'
+          return <div key={p.id} className="card">
+            <div style={{display:'flex',justifyContent:'space-between',marginBottom:10}}>
+              <div><div style={{fontWeight:600,fontSize:15}}>{p.name}</div>
+                <div style={{marginTop:4,display:'flex',gap:8}}><span className="badge" style={{background:`${color}20`,color}}>{BIZ_STATUS.find(s=>s.value===p.status)?.label||p.status}</span>{p.startDate&&<span style={{fontSize:11,color:'var(--muted)'}}>Từ {p.startDate}</span>}</div>
+              </div>
+              <div style={{display:'flex',gap:6}}><button className="btn btn-ghost btn-sm" onClick={()=>{setEditing(p.id);setForm({...p});setModal(true)}}>✏</button><button className="btn btn-danger btn-sm" onClick={()=>{if(!confirm('Xóa?'))return;dispatch({type:'DEL_BIZ',id:p.id});syncRemove('BusinessPlans',p.id)}}>🗑</button></div>
+            </div>
+            <div className="grid2" style={{gap:8}}>
+              <div style={{background:'var(--bg3)',borderRadius:7,padding:'8px 12px',textAlign:'center'}}><div style={{fontSize:11,color:'var(--muted)'}}>Doanh thu</div><div style={{fontWeight:700,color:'var(--blue)'}}>{fmt(Number(p.revenue)||0)}</div></div>
+              <div style={{background:'var(--bg3)',borderRadius:7,padding:'8px 12px',textAlign:'center'}}><div style={{fontSize:11,color:'var(--muted)'}}>Chi phí</div><div style={{fontWeight:700,color:'var(--red)'}}>{fmt(Number(p.cost)||0)}</div></div>
+            </div>
+            <div style={{marginTop:8,padding:'8px 12px',background:'var(--bg3)',borderRadius:7,display:'flex',justifyContent:'space-between'}}>
+              <span style={{fontSize:13,color:'var(--muted)'}}>Lợi nhuận</span>
+              <span style={{fontWeight:700,color:profit>=0?'var(--green)':'var(--red)'}}>{fmt(profit)} <span style={{fontSize:11}}>({margin}% margin)</span></span>
+            </div>
+          </div>
+        })}
+      </div>
+      {modal&&<Modal title={editing?'Sửa':'Thêm kế hoạch kinh doanh'} onClose={()=>setModal(false)}>
+        <div className="form-group"><label>Tên kế hoạch</label><input type="text" value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))}/></div>
+        <div className="form-group"><label>Trạng thái</label><SelectWithOther value={form.status} onChange={v=>setForm(p=>({...p,status:v}))} options={BIZ_STATUS}/></div>
+        <div className="form-group"><label>Ngày bắt đầu</label><input type="month" value={form.startDate||''} onChange={e=>setForm(p=>({...p,startDate:e.target.value}))}/></div>
+        <div className="form-group"><label>Doanh thu/tháng (ngàn đ)</label><input type="number" step="0.1" value={form.revenue} onChange={e=>setForm(p=>({...p,revenue:e.target.value}))}/></div>
+        <div className="form-group"><label>Chi phí/tháng (ngàn đ)</label><input type="number" step="0.1" value={form.cost} onChange={e=>setForm(p=>({...p,cost:e.target.value}))}/></div>
+        <div className="form-group"><label>Ghi chú</label><textarea value={form.note||''} rows={2} onChange={e=>setForm(p=>({...p,note:e.target.value}))}/></div>
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}><button className="btn btn-ghost" onClick={()=>setModal(false)}>Hủy</button><button className="btn btn-primary" onClick={save}>{editing?'Lưu':'Thêm'}</button></div>
+      </Modal>}
+    </div>
+  )
+}
+
+// ── SETTINGS ──────────────────────────────────────────────────────────────
+function Settings() {
+  const {state} = useContext(Ctx)
+  const [url,setUrl] = useState(APPS_SCRIPT_URL.includes('YOUR_')?'':APPS_SCRIPT_URL)
+  const [testResult,setTestResult] = useState(null)
+  const [testing,setTesting] = useState(false)
+  const testConn = async () => {
+    if(!url)return; setTesting(true); setTestResult(null)
+    try { const res=await fetch(`${url}?sheet=all&userId=test`); const json=await res.json(); setTestResult(json.success?'✅ Kết nối thành công!':'❌ Lỗi: '+json.error) }
+    catch(e) { setTestResult('❌ Không kết nối được: '+e.message) }
+    setTesting(false)
+  }
+  return (
+    <div>
+      <div className="section-header"><h2>Cài đặt</h2></div>
+      <div className="card" style={{marginBottom:16}}>
+        <div style={{fontWeight:600,marginBottom:12}}>Google Sheets Sync</div>
+        <div className="form-group"><label>Apps Script URL</label><input type="text" value={url} onChange={e=>setUrl(e.target.value)} placeholder="https://script.google.com/macros/s/.../exec"/></div>
+        <div style={{fontSize:12,color:'var(--muted)',marginBottom:12}}>Mở file HTML bằng Notepad và thay <code style={{background:'var(--bg3)',padding:'1px 4px',borderRadius:3}}>YOUR_APPS_SCRIPT_URL_HERE</code> bằng URL này.</div>
+        <button className="btn btn-primary" onClick={testConn} disabled={!url||testing}>{testing?'Đang kiểm tra...':'Test kết nối'}</button>
+        {testResult&&<div style={{marginTop:10,fontSize:13,padding:'8px 12px',background:'var(--bg3)',borderRadius:6}}>{testResult}</div>}
+      </div>
+      <div className="card">
+        <div style={{fontWeight:600,marginBottom:10}}>Trạng thái dữ liệu (tài khoản bạn)</div>
+        <div style={{fontSize:13,color:'var(--muted)',lineHeight:2}}>
+          Tài sản: <strong style={{color:'var(--text)'}}>{state.assets.length}</strong> &nbsp;|&nbsp; Nợ: <strong style={{color:'var(--text)'}}>{state.debts.length}</strong> &nbsp;|&nbsp; Thu nhập: <strong style={{color:'var(--text)'}}>{state.income.length}</strong> &nbsp;|&nbsp; Chi tiêu: <strong style={{color:'var(--text)'}}>{state.expenses.length}</strong><br/>
+          Đầu tư: <strong style={{color:'var(--text)'}}>{state.investments.length}</strong> &nbsp;|&nbsp; Mục tiêu: <strong style={{color:'var(--text)'}}>{state.goals.length}</strong> &nbsp;|&nbsp; Kế hoạch KD: <strong style={{color:'var(--text)'}}>{state.businessPlans.length}</strong>
+        </div>
+        <div style={{marginTop:12}}><button className="btn btn-danger btn-sm" onClick={()=>{if(confirm('Xóa cache local?')){localStorage.removeItem(LS_KEY);window.location.reload()}}}>Xóa cache local</button></div>
+      </div>
+    </div>
+  )
+}
+
+// ── APP ───────────────────────────────────────────────────────────────────
+const TABS = [
+  {id:'dashboard',icon:'📊',label:'Dashboard'},
+  {id:'assets',icon:'🏦',label:'Tài sản & Nợ'},
+  {id:'cashflow',icon:'💸',label:'Dòng tiền'},
+  {id:'reports',icon:'📈',label:'Báo cáo'},
+  {id:'tools',icon:'🔧',label:'Công cụ'},
+  {id:'tracker',icon:'📌',label:'Đầu tư'},
+  {id:'goals',icon:'🎯',label:'Mục tiêu'},
+  {id:'business',icon:'🏢',label:'Kinh doanh'},
+  {id:'users',icon:'👥',label:'Người dùng',adminOnly:true},
+  {id:'settings',icon:'⚙️',label:'Cài đặt',adminOnly:true},
+]
+
+const PAGES = {dashboard:<Dashboard/>,assets:<Assets/>,cashflow:<CashFlow/>,reports:<Reports/>,tools:<Tools/>,tracker:<Tracker/>,goals:<Goals/>,business:<Business/>,users:<UserManagement/>,settings:<Settings/>}
+
+function SyncBadge({status}) {
+  const map={idle:{t:'Đã đồng bộ',c:'var(--green)'},syncing:{t:'Đang sync...',c:'var(--amber)'},error:{t:'Lỗi sync',c:'var(--red)'},offline:{t:'Offline / Demo',c:'var(--muted)'}}
+  const s=map[status]||map.idle
+  return <span style={{color:s.c,fontSize:11}}>● {s.t}</span>
+}
+
+function App() {
+  const saved = loadLS()
+  const savedUser = loadUser()
+  const [state,dispatch] = useReducer(reducer, {...INIT,...saved,currentUser:savedUser})
+  const [sbOpen, setSbOpen] = useState(false)
+  const syncTimers = useRef({})
+
+  const sync = useCallback((sheet,data)=>{
+    const enriched = {...data, userId: state.currentUser?.id}
+    clearTimeout(syncTimers.current[sheet+(data.id||'')])
+    syncTimers.current[sheet+(data.id||'')] = setTimeout(()=>{
+      dispatch({type:'SET_SYNC',status:'syncing'})
+      api.upsert(sheet,enriched).then(()=>dispatch({type:'SET_SYNC',status:'idle'})).catch(()=>dispatch({type:'SET_SYNC',status:'error'}))
+    },500)
+  },[state.currentUser])
+
+  const syncRemove = useCallback((sheet,id)=>{ api.remove(sheet,id).catch(()=>{}) },[])
+
+  const handleLogin = useCallback((user)=>{
+    saveUser(user); dispatch({type:'SET_USER',user})
+    if(!hasUrl()){dispatch({type:'SET_SYNC',status:'offline'});return}
+    dispatch({type:'SET_SYNC',status:'syncing'})
+    api.fetchAll(user.id).then(data=>{
+      if(data) dispatch({type:'LOAD',data:{assets:data.Assets||[],debts:data.Debts||[],income:data.Income||[],expenses:data.Expenses||[],investments:data.Investments||[],goals:data.Goals||[],businessPlans:data.BusinessPlans||[]}})
+      else dispatch({type:'SET_SYNC',status:'offline'})
+    }).catch(()=>dispatch({type:'SET_SYNC',status:'error'}))
+  },[])
+
+  const handleLogout = () => { clearUser(); dispatch({type:'LOGOUT'}) }
+  const goTab = (id) => { dispatch({type:'SET_TAB',tab:id}); setSbOpen(false) }
+
+  if (!state.currentUser) return <LoginScreen onLogin={handleLogin}/>
+
+  const visibleTabs = TABS.filter(t=>!t.adminOnly||state.currentUser.role==='admin')
+  const syncColors = {idle:'var(--green)',syncing:'var(--amber)',error:'var(--red)',offline:'var(--muted)'}
+  const syncText  = {idle:'Synced',syncing:'Syncing…',error:'Sync error',offline:'Offline'}
+
+  return (
+    <Ctx.Provider value={{state,dispatch,sync,syncRemove}}>
+
+      {/* ── Mobile top bar ── */}
+      <div id="topbar">
+        <button id="ham-btn" onClick={()=>setSbOpen(v=>!v)}>☰</button>
+        <div className="logo-m">💰 Dat Finance JSC</div>
+        <span style={{fontSize:11,color:syncColors[state.syncStatus]||'var(--green)'}}>● {syncText[state.syncStatus]||'Synced'}</span>
+      </div>
+
+      {/* ── Sidebar overlay ── */}
+      {sbOpen && <div className="sb-overlay show" onClick={()=>setSbOpen(false)}/>}
+
+      {/* ── Sidebar ── */}
+      <div id="sidebar" className={sbOpen?'open':''}>
+        <div className="logo">
+          <div className="logo-icon">💰</div>
+          <div><span className="brand">VN</span> Finance</div>
+        </div>
+        <nav>
+          {visibleTabs.map((t,i)=>{
+            const isLast3 = i >= visibleTabs.length - (state.currentUser.role==='admin'?3:2)
+            const showSep = isLast3 && (i === visibleTabs.length - (state.currentUser.role==='admin'?3:2))
+            return (
+              <React.Fragment key={t.id}>
+                {showSep && <div className="nav-sep"/>}
+                <a className={state.activeTab===t.id?'active':''} onClick={()=>goTab(t.id)}>
+                  <span className="ni">{t.icon}</span><span>{t.label}</span>
+                </a>
+              </React.Fragment>
+            )
+          })}
+        </nav>
+        <div className="user-box">
+          <div className="u-name">
+            {state.currentUser.role==='admin'?'👑':'👤'} {state.currentUser.username}
+          </div>
+          <div className="u-role">{state.currentUser.role} · <span style={{color:syncColors[state.syncStatus]||'var(--green)'}}>●</span> {syncText[state.syncStatus]||'Synced'}</div>
+          <button className="btn btn-ghost btn-sm" style={{width:'100%'}} onClick={handleLogout}>Đăng xuất</button>
+        </div>
+      </div>
+
+      {/* ── Main layout ── */}
+      <div id="layout">
+        <div id="main">
+          {PAGES[state.activeTab]||<Dashboard/>}
+        </div>
+      </div>
+
+    </Ctx.Provider>
+  )
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>)
+</script>
+</body>
+</html>
