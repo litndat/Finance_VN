@@ -462,7 +462,7 @@ function LoginScreen({onLogin}) {
           </div>
           {error && <div style={{color:'var(--red)',fontSize:13,marginBottom:12,padding:'8px 10px',background:'rgba(216,90,48,.1)',borderRadius:6}}>{error}</div>}
           <button className="btn btn-primary" type="submit" disabled={loading} style={{width:'100%',padding:'12px',fontSize:14,justifyContent:'center'}}>
-            {loading ? '⏳ Đang đăng nhập...' : '🔓 Đăng nhập'}
+            {loading ? '⏳ Đang đăng nhập...' : '🔒 Đăng nhập'}
           </button>
         </form>
         <div style={{marginTop:14,fontSize:11,color:'var(--muted)',textAlign:'center',padding:'8px',background:'var(--bg3)',borderRadius:6}}>
